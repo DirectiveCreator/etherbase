@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  etherbase-reader:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.reader
+    ports:
+      - "8082:8082"
+    environment:
+      - READER_PORT=8082
+      - RPC_URL=${RPC_URL:-wss://dream-rpc.somnia.network/ws}
+      - CHAIN_ID=${CHAIN_ID:-50312}
+      - ENV=production
+      - POLL_INTERVAL_MS=${POLL_INTERVAL_MS:-1000}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - etherbase-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  etherbase-writer:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.writer
+    ports:
+      - "8081:8081"
+    environment:
+      - WRITER_PORT=8081
+      - RPC_URL=${RPC_URL:-wss://dream-rpc.somnia.network/ws}
+      - CHAIN_ID=${CHAIN_ID:-50312}
+      - ENV=production
+      - POLL_INTERVAL_MS=${POLL_INTERVAL_MS:-1000}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - etherbase-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  etherbase-frontend:
+    build:
+      context: ./packages/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_ENV=somnia
+      - NEXT_PUBLIC_USE_LOCAL_BACKEND=false
+    depends_on:
+      - etherbase-reader
+      - etherbase-writer
+    restart: always
+    networks:
+      - etherbase-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  etherbase-network:
+    driver: bridge
