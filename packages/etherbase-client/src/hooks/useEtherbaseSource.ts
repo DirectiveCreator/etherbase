@@ -57,6 +57,21 @@ export default function useEtherbaseSource({
         throw new Error(`Invalid function name: ${writeFunctionName}`)
       }
 
+      // Try to estimate gas first for debugging
+      try {
+        const gasEstimate = await publicClient.estimateContractGas({
+          address: sourceAddress,
+          abi: EtherbaseSourceAbi,
+          // @ts-ignore
+          functionName: writeFunctionName,
+          // @ts-ignore
+          args,
+        })
+        console.log(`Gas estimate for ${writeFunctionName}:`, gasEstimate.toString())
+      } catch (gasEstimateError) {
+        console.log(`Gas estimation failed for ${writeFunctionName}:`, gasEstimateError)
+      }
+
       const hash = await walletClient.writeContract({
         address: sourceAddress,
         abi: EtherbaseSourceAbi,
@@ -64,8 +79,8 @@ export default function useEtherbaseSource({
         functionName: writeFunctionName,
         // @ts-ignore
         args,
-        // currently gas estimation is broken in somnia so hardcoding a high value
-        gas: 2000000n,
+        // Using higher gas limit - increase if still failing
+        gas: 10000000n,
       })
       const receipt = await publicClient.waitForTransactionReceipt({ hash })
       console.log("Execute write receipt:", receipt)

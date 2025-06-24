@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useEtherbase } from '@msquared/etherbase-client';
-import { etherbaseConfig } from './etherbaseConfig';
+import { etherbaseConfig, etherbaseAddress, multicallAddress } from './etherbaseConfig';
 
 export default function TestWallet() {
   // State variables
@@ -14,7 +14,7 @@ export default function TestWallet() {
   const [results, setResults] = useState<any[]>([]);
 
   // Etherbase integration
-  const etherbase = useEtherbase(etherbaseConfig);
+  const etherbase = useEtherbase();
 
   // Helper function to add results
   const addResult = (result: string) => {
@@ -51,9 +51,9 @@ export default function TestWallet() {
       {/* Etherbase Contract Information */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4">Contract Information</h2>
-        <p><strong>Etherbase Address:</strong> {etherbaseConfig.etherbaseAddress}</p>
-        <p><strong>Multicall Address:</strong> {etherbaseConfig.multicallAddress}</p>
-        <p><strong>Chain:</strong> {etherbaseConfig.chain.name} (ID: {etherbaseConfig.chain.id})</p>
+        <p><strong>Etherbase Address:</strong> {etherbaseAddress}</p>
+        <p><strong>Multicall Address:</strong> {multicallAddress}</p>
+        <p><strong>Chain:</strong> {etherbaseConfig.chain?.name} (ID: {etherbaseConfig.chain?.id})</p>
         <p><strong>Backend Connection:</strong> {etherbaseConfig.useBackend ? 'Enabled' : 'Disabled'}</p>
         
         <div className="mt-6">

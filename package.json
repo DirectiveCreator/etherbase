@@ -7,6 +7,9 @@
   "scripts": {
     "deploy": "bash scripts/deploy.sh"
   },
+  "dependencies": {
+    "ws": "^8.14.2"
+  },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4"
   }

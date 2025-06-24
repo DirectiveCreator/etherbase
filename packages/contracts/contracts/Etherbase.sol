@@ -93,9 +93,11 @@ contract Etherbase {
         for (uint256 i = 0; i < customContractAddresses.length; i++) {
             address contractAddress = customContractAddresses[i];
             CustomContract memory customContract = customContracts[contractAddress];
-            _customContracts[i].contractAddress = contractAddress;
-            _customContracts[i].addedBy = customContract.addedBy;
-            _customContracts[i].contractABI = customContract.contractABI;
+            _customContracts[i] = CustomContract({
+                contractAddress: contractAddress,
+                addedBy: customContract.addedBy,
+                contractABI: customContract.contractABI
+            });
         }
         return _customContracts;
     }
@@ -111,8 +113,10 @@ contract Etherbase {
     function getSources() public view returns (SourceInfo[] memory) {
         SourceInfo[] memory _sources = new SourceInfo[](sources.length);
         for (uint256 i = 0; i < sources.length; i++) {
-            _sources[i].sourceAddress = sources[i].sourceAddress;
-            _sources[i].owner = sources[i].owner;
+            _sources[i] = SourceInfo({
+                sourceAddress: sources[i].sourceAddress,
+                owner: sources[i].owner
+            });
         }
         return _sources;
     }

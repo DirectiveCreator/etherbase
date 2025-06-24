@@ -36,8 +36,10 @@ func LoadConfig() (*Config, error) {
 
 	rpcURL := os.Getenv("RPC_URL")
 	if rpcURL == "" {
-		// I recommend using Ankr over this
-		rpcURL = "wss://dream-rpc.somnia.network/ws"
+		// Alternative high-performance RPC
+		rpcURL = "wss://enterprise.onerpc.com/somnia_testnet?apikey=e97af24c8759a6cad0acd837d853aac43bb0903dcdab411d08b77aaf5c4c38a7"
+		// Fallback RPC
+		// rpcURL = "wss://dream-rpc.somnia.network/ws"
 		// rpcURL = "ws://localhost:8545"
 	}
 

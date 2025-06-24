@@ -46,6 +46,13 @@ type PreparedTx struct {
     txRequest TxRequest
 }
 
+// NonceManager tracks nonces for addresses
+type NonceManager struct {
+    currentNonce uint64
+    lastUpdate   time.Time
+    mutex        sync.Mutex
+}
+
 // TransactionPool is a naive queue that processes transaction requests in batches
 type TransactionPool struct {
     pool           []TxRequest
@@ -55,6 +62,7 @@ type TransactionPool struct {
     stopCh         chan struct{}
     sourceABI     abi.ABI
     keyCache       sync.Map    // Changed from map to sync.Map
+    nonceCache     sync.Map    // address -> *NonceManager
     signer         types.Signer
 }
 
@@ -205,7 +213,13 @@ func (tp *TransactionPool) processBatch(batch []TxRequest) {
         }
         stats.PackDataTime += time.Since(packStart)
 
-        nonceVal := uint64(time.Now().UnixNano() / 1000)
+        // Get proper nonce (optimized for batch processing)
+        fromAddress := crypto.PubkeyToAddress(privKey.PublicKey)
+        nonceVal, err := tp.getNextNonce(fromAddress)
+        if err != nil {
+            log.Printf("Failed to get nonce for transaction %d: %v", i, err)
+            continue
+        }
         tx := types.NewTx(&types.DynamicFeeTx{
             ChainID:   tp.signer.ChainID(),
             Nonce:     nonceVal,
@@ -347,6 +361,88 @@ func (tp *TransactionPool) monitorTransactionReceipts(txResults []TxResult) {
         // Wait before next check
         time.Sleep(3 * time.Second)
     }
+}
+
+// hexToUint64 converts a hex string to uint64
+func hexToUint64(hexStr string) (uint64, error) {
+    // Remove 0x prefix if present
+    if strings.HasPrefix(hexStr, "0x") {
+        hexStr = hexStr[2:]
+    }
+    // Parse as base 16
+    val := big.NewInt(0)
+    val, ok := val.SetString(hexStr, 16)
+    if !ok {
+        return 0, fmt.Errorf("invalid hex string: %s", hexStr)
+    }
+    return val.Uint64(), nil
+}
+
+// getNextNonce efficiently manages nonces for addresses using caching
+func (tp *TransactionPool) getNextNonce(address common.Address) (uint64, error) {
+    addressStr := address.Hex()
+    
+    // Get or create nonce manager for this address
+    var nonceManager *NonceManager
+    if nm, exists := tp.nonceCache.Load(addressStr); exists {
+        nonceManager = nm.(*NonceManager)
+    } else {
+        // Create new nonce manager and fetch initial nonce
+        result, err := client.Call("eth_getTransactionCount", []interface{}{addressStr, "pending"})
+        if err != nil {
+            return 0, fmt.Errorf("failed to get initial nonce: %v", err)
+        }
+        
+        var nonceHex string
+        if err := json.Unmarshal(result, &nonceHex); err != nil {
+            return 0, fmt.Errorf("failed to parse initial nonce: %v", err)
+        }
+        
+        initialNonce, err := hexToUint64(nonceHex)
+        if err != nil {
+            return 0, fmt.Errorf("failed to convert initial nonce: %v", err)
+        }
+        
+        nonceManager = &NonceManager{
+            currentNonce: initialNonce,
+            lastUpdate:  time.Now(),
+        }
+        
+        // Use LoadOrStore to handle race conditions
+        if actual, loaded := tp.nonceCache.LoadOrStore(addressStr, nonceManager); loaded {
+            nonceManager = actual.(*NonceManager)
+        }
+    }
+    
+    // Thread-safe nonce increment
+    nonceManager.mutex.Lock()
+    defer nonceManager.mutex.Unlock()
+    
+    // Check if nonce cache is stale (older than 30 seconds)
+    if time.Since(nonceManager.lastUpdate) > 30*time.Second {
+        // Refresh nonce from blockchain
+        result, err := client.Call("eth_getTransactionCount", []interface{}{addressStr, "pending"})
+        if err != nil {
+            // If refresh fails, just continue with cached nonce
+            log.Printf("Warning: Failed to refresh nonce for %s, using cached value: %v", addressStr, err)
+        } else {
+            var nonceHex string
+            if err := json.Unmarshal(result, &nonceHex); err == nil {
+                if refreshedNonce, err := hexToUint64(nonceHex); err == nil {
+                    // Only update if blockchain nonce is higher (handles external transactions)
+                    if refreshedNonce > nonceManager.currentNonce {
+                        nonceManager.currentNonce = refreshedNonce
+                    }
+                    nonceManager.lastUpdate = time.Now()
+                }
+            }
+        }
+    }
+    
+    currentNonce := nonceManager.currentNonce
+    nonceManager.currentNonce++
+    
+    return currentNonce, nil
 }
 
 func (tp *TransactionPool) Stop() {

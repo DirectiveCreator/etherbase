@@ -3,7 +3,15 @@ import { hardhat } from "viem/chains"
 
 // Determine if we should use local backend services
 const useLocalBackend = process.env.NEXT_PUBLIC_USE_LOCAL_BACKEND === "true"
-const localUrl = "http://localhost"
+
+// For client-side requests (browser)
+const localUrlReader = "http://127.0.0.1"
+const localUrlWriter = "http://127.0.0.1"
+
+// For server-side requests (inside Docker container)
+const isServerSide = typeof window === "undefined"
+const serverLocalUrlReader = isServerSide && useLocalBackend ? "http://etherbase-reader" : localUrlReader
+const serverLocalUrlWriter = isServerSide && useLocalBackend ? "http://etherbase-writer" : localUrlWriter
 
 // Get contract addresses from environment variables or use defaults
 const etherbaseAddress = process.env.NEXT_PUBLIC_ETHERBASE_ADDRESS || "0x07F53212efb8068d76D87B6A4B843622E37861BD"
@@ -15,19 +23,18 @@ export const etherbaseConfig: EtherbaseConfig = {
 
   // Use either local or remote backend services based on configuration
   httpReaderUrl: useLocalBackend 
-    ? `${localUrl}:8082` 
+    ? `${serverLocalUrlReader}:8082` 
     : "https://etherbase-reader-496683047294.europe-west2.run.app",
-  wsReaderUrl: useLocalBackend 
-    ? `${localUrl}:8082` 
+wsReaderUrl: useLocalBackend 
+    ? `ws://${serverLocalUrlReader.replace('http://', '')}:8082` 
     : "wss://etherbase-reader-496683047294.europe-west2.run.app",
   wsWriterUrl: useLocalBackend 
-    ? `${localUrl}:8081` 
+    ? `ws://${serverLocalUrlWriter.replace('http://', '')}:8081` 
     : "wss://etherbase-writer-496683047294.europe-west2.run.app",
 
-  // Ensure the hooks use the backend instead of reading directly from the chain
-  useBackend: true,
-  
-  // Add contract addresses from environment variables
-  etherbaseAddress,
-  multicallAddress,
+  // Use browser-based event emission since backend endpoints are not implemented
+  useBackend: false,
 }
+
+// Export contract addresses separately
+export { etherbaseAddress, multicallAddress }

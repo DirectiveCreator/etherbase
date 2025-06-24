@@ -19,7 +19,7 @@ export const etherbaseConfig: EtherbaseConfig = {
     ? `${localUrl}:8081`
     : "wss://etherbase-writer-496683047294.europe-west2.run.app",
   privateKey:
-    "0x0c9a44c9e7778f9f3132ab2ad581b1473f84683e6b42da3938160dc602ee29d0",
+    process.env.NEXT_PUBLIC_PRIVATE_KEY || "YOUR_PRIVATE_KEY_HERE",
   useBackend: true,
 }
 

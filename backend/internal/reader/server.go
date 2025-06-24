@@ -76,7 +76,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		HandleReadWebSocket(conn, r)
 	})
 
-	// Create server with proper address format
+	// Create server with proper address format - use empty string to bind to all interfaces
 	addr := fmt.Sprintf(":%s", cfg.ReaderPort)
 	srv := &http.Server{
 		Addr:    addr,

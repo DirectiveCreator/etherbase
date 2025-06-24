@@ -11,3 +11,13 @@ dist
 .env
 .env.*
 !.env.example
+
+# Local development and testing files
+test.html
+verify-transactions.js
+*.local.js
+*.test.js
+
+# Temporary files and scripts
+simple-client.js
+enhanced-client.js

@@ -68,6 +68,9 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		}
 	}()
 
+	// Set up HTTP routes
+	SetupRoutes(r)
+
 	// Set up routes for write operations
 	r.HandleFunc("/write", func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
@@ -77,7 +80,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		handleWriteWebSocket(conn, r)
 	})
 
-	// Create server with proper address format
+	// Create server with proper address format - use empty string to bind to all interfaces
 	addr := fmt.Sprintf(":%s", cfg.WriterPort)
 	srv := &http.Server{
 		Addr:    addr,
