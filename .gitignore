@@ -6,3 +6,8 @@ build/
 coverage/
 .nx/
 dist
+
+# Environment configuration (contain secrets – DO NOT COMMIT)
+.env
+.env.*
+!.env.example
