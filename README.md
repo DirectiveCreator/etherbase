@@ -96,3 +96,9 @@ users.alice.balance: 100
 This breaks the nested KV store model as `users.alice` is a string and not an object. At the moment we ignore this, and if you set `users.alice` to a `nil` value, it will remove the entire `users.alice` entry.
 
 You can bypass this behaviour by manually interacting with the entries system as you wish.
+
+## Deployment
+For production you can either:
+- Use the provided `docker-compose.yml` to run reader, writer, and frontend services locally or on any VM.
+- Build and push the Docker images to a registry, then deploy on Render, AWS ECS/Fargate, Google Cloud Run, or any platform that supports containers.
+See `DEPLOYMENT.md` for detailed instructions.
