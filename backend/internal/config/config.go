@@ -54,6 +54,12 @@ func LoadConfig() (*Config, error) {
 	}
 	interval, _ := strconv.Atoi(intervalStr)
 
+	defaultEtherbase := "0x62F1B07877faC4E758794Dea44939CdCef5281a1"
+	etherbaseAddrStr := os.Getenv("ETHERBASE_ADDRESS")
+	if etherbaseAddrStr == "" {
+		etherbaseAddrStr = defaultEtherbase
+	}
+
 	return &Config{
 		ReaderPort:         readerPort,
 		WriterPort:         writerPort,
@@ -62,7 +68,7 @@ func LoadConfig() (*Config, error) {
 		LocalPrivateKey:   os.Getenv("LOCAL_PRIVATE_KEY"),
 		PrivateKey:        os.Getenv("PRIVATE_KEY"),
 		PollingIntervalMS: interval,
-		EtherbaseAddress:    common.HexToAddress("0x62F1B07877faC4E758794Dea44939CdCef5281a1"),
+		EtherbaseAddress:    common.HexToAddress(etherbaseAddrStr),
 		MulticallAddress:    common.HexToAddress("0x3fD7C31D0d2128aD2b83db6327CA73c1186f9EA1"),
 		ChainID:            chainID,
 	}, nil

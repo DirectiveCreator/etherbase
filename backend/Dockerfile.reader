@@ -7,8 +7,17 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o reader ./cmd/reader
 
 FROM alpine:latest
 
+# Install wget for health checks
+RUN apk add --no-cache wget
+
 WORKDIR /app
 COPY --from=builder /app/reader .
 
-EXPOSE 8080
-CMD ["./reader"] 
+# Expose the reader service port (must match docker-compose.yml)
+EXPOSE 8082
+
+# Basic container health-check.  Assumes the reader exposes
+# an HTTP health endpoint (see docker-compose configuration).
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD wget --spider -q http://localhost:8082/health || exit 1
+CMD ["./reader"]

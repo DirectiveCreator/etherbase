@@ -15,7 +15,7 @@ FROM node:20-slim AS app-builder
 WORKDIR /app
 WORKDIR /app/packages/frontend
 COPY packages/frontend/package*.json ./
-COPY packages/frontend .
+COPY packages/frontend/ .
 
 # Create the node_modules/@msquared/etherbase-client directory and copy the built files
 RUN mkdir -p ./node_modules/@msquared/etherbase-client
