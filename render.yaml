@@ -1,113 +1,95 @@
-# Render.yaml for Etherbase Deployment
-# This file defines the services for deploying Etherbase on Render.com
-
 services:
-  # Backend Reader Service - Handles blockchain data reading
+  # Backend Reader Service
   - type: web
     name: etherbase-reader
     env: docker
+    region: ohio
+    plan: starter
     dockerfilePath: ./backend/Dockerfile.reader
     dockerContext: ./backend
-    healthCheckPath: /health
-    healthCheckTimeout: 5s
     numInstances: 1
+    healthCheckPath: /health
     envVars:
       - key: READER_PORT
         value: 8082
-      - key: RPC_URL
-        value: wss://dream-rpc.somnia.network/ws
-      - key: CHAIN_ID
-        value: 50312
       - key: ENV
         value: production
       - key: POLL_INTERVAL_MS
         value: 1000
+      - key: RPC_URL
+        value: wss://dream-rpc.somnia.network/ws
+      - key: CHAIN_ID
+        value: 50312
       - key: ETHERBASE_ADDRESS
-        fromService:
-          name: etherbase-env
-          type: env
-          key: ETHERBASE_ADDRESS
+        value: 0x07F53212efb8068d76D87B6A4B843622E37861BD
       - key: MULTICALL_ADDRESS
-        fromService:
-          name: etherbase-env
-          type: env
-          key: MULTICALL_ADDRESS
+        value: 0x3fD7C31D0d2128aD2b83db6327CA73c1186f9EA1
       - key: PRIVATE_KEY
+        value: 26365cf13ccb3bdcf1e09ea3c0dcd5fc815a7c318401abc4de884df995c89e5e
         sync: false
-        fromService:
-          name: etherbase-env
-          type: env
-          key: PRIVATE_KEY
+    autoDeploy: true
 
-  # Backend Writer Service - Handles blockchain data writing
+  # Backend Writer Service
   - type: web
     name: etherbase-writer
     env: docker
+    region: ohio
+    plan: starter
     dockerfilePath: ./backend/Dockerfile.writer
     dockerContext: ./backend
-    healthCheckPath: /health
-    healthCheckTimeout: 5s
     numInstances: 1
+    healthCheckPath: /health
     envVars:
       - key: WRITER_PORT
         value: 8081
-      - key: RPC_URL
-        value: wss://dream-rpc.somnia.network/ws
-      - key: CHAIN_ID
-        value: 50312
       - key: ENV
         value: production
       - key: POLL_INTERVAL_MS
         value: 1000
+      - key: RPC_URL
+        value: wss://dream-rpc.somnia.network/ws
+      - key: CHAIN_ID
+        value: 50312
       - key: ETHERBASE_ADDRESS
-        fromService:
-          name: etherbase-env
-          type: env
-          key: ETHERBASE_ADDRESS
+        value: 0x07F53212efb8068d76D87B6A4B843622E37861BD
       - key: MULTICALL_ADDRESS
-        fromService:
-          name: etherbase-env
-          type: env
-          key: MULTICALL_ADDRESS
+        value: 0x3fD7C31D0d2128aD2b83db6327CA73c1186f9EA1
       - key: PRIVATE_KEY
+        value: 26365cf13ccb3bdcf1e09ea3c0dcd5fc815a7c318401abc4de884df995c89e5e
         sync: false
-        fromService:
-          name: etherbase-env
-          type: env
-          key: PRIVATE_KEY
+    autoDeploy: true
 
-  # Frontend Application
+  # Frontend Service
   - type: web
     name: etherbase-frontend
     env: docker
+    region: ohio
+    plan: starter
     dockerfilePath: ./packages/frontend/Dockerfile
     dockerContext: .
-    healthCheckPath: /
-    healthCheckTimeout: 10s
     numInstances: 1
     envVars:
       - key: NEXT_PUBLIC_ENV
         value: somnia
       - key: NEXT_PUBLIC_USE_LOCAL_BACKEND
         value: false
-      - key: NEXT_PUBLIC_READER_URL
+      - key: NEXT_PUBLIC_ETHERBASE_ADDRESS
+        value: 0x07F53212efb8068d76D87B6A4B843622E37861BD
+      - key: NEXT_PUBLIC_MULTICALL_ADDRESS
+        value: 0x3fD7C31D0d2128aD2b83db6327CA73c1186f9EA1
+      - key: NEXT_PUBLIC_HTTP_READER_URL
         fromService:
           name: etherbase-reader
           type: web
           property: host
-      - key: NEXT_PUBLIC_WRITER_URL
+      - key: NEXT_PUBLIC_WS_READER_URL
+        fromService:
+          name: etherbase-reader
+          type: web
+          property: host
+      - key: NEXT_PUBLIC_WS_WRITER_URL
         fromService:
           name: etherbase-writer
           type: web
           property: host
-
-  # Environment Variables Service
-  - type: env
-    name: etherbase-env
-    envVars:
-      - key: ETHERBASE_ADDRESS
-        value: 0x07F53212efb8068d76D87B6A4B843622E37861BD
-      - key: MULTICALL_ADDRESS
-        value: 0x3fD7C31D0d2128aD2b83db6327CA73c1186f9EA1
-      - key: PRIVATE_KEY
-        generateValue: true
+    autoDeploy: true
